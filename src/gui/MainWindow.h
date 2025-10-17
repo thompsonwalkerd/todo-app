@@ -164,31 +164,21 @@ signals:
 };
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT  // Required for Qt signals/slots
+    Q_OBJECT
 
 private:
-    // Database
     std::unique_ptr<TodoDatabase> db;
 
-    // UI Components
     QWidget* centralWidget;
     QVBoxLayout* mainLayout;
-
-    // Top bar
     QHBoxLayout* topBar;
     QComboBox* categoryFilter;
     QPushButton* addButton;
-
-    // Todo list
     QListWidget* todoList;
-
-    // Flag to prevent dialog opening when checkbox is clicked
-    bool checkboxWasClicked = false;
-    
-    // Bottom bar
     QLabel* statusLabel;
-    
-    // Helper methods
+
+    bool checkboxWasClicked = false;  // Prevents dialog when checkbox is clicked
+
     void setupUI();
     void connectSignals();
     void loadTodos();

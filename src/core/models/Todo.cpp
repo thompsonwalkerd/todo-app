@@ -1,10 +1,10 @@
 #include "Todo.h"
 #include <cmath>
 
-Todo::Todo() 
-    : id(0), title(""), description(""), category("general"), completed(false), 
+Todo::Todo()
+    : id(0), title(""), description(""), category("general"), completed(false),
       priority(2), created_at(std::time(nullptr)), updated_at(std::time(nullptr)),
-      due_date(std::nullopt) {  // nullopt means "no value"
+      due_date(std::nullopt) {
 }
 
 Todo::Todo(const std::string& title, const std::string& description, 
@@ -58,18 +58,18 @@ void Todo::updateTimestamp() {
 
 bool Todo::isOverdue() const {
     if (!due_date.has_value() || completed) {
-        return false;  // No due date or already completed
+        return false;
     }
-    
+
     return std::time(nullptr) > due_date.value();
 }
 
 int Todo::daysUntilDue() const {
     if (!due_date.has_value()) {
-        return 0;  // No due date
+        return 0;
     }
-    
+
     time_t now = std::time(nullptr);
     double seconds_diff = std::difftime(due_date.value(), now);
-    return static_cast<int>(seconds_diff / 86400);  // 86400 seconds in a day
+    return static_cast<int>(seconds_diff / 86400);
 }

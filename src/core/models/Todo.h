@@ -3,19 +3,19 @@
 
 #include <string>
 #include <ctime>
-#include <optional>  // For optional due_date
+#include <optional>
 
 class Todo {
 private:
     int id;
     std::string title;
     std::string description;
-    std::string category;  // "work", "personal", etc.
+    std::string category;
     bool completed;
     time_t created_at;
     time_t updated_at;
-    std::optional<time_t> due_date;  // Optional - not all todos have deadlines
-    int priority; // 1=low, 2=medium, 3=high
+    std::optional<time_t> due_date;  // Not all todos need a deadline
+    int priority;  // 1=low, 2=medium, 3=high
 
 public:
     // Constructors
@@ -48,8 +48,8 @@ public:
     
     // Utility methods
     void updateTimestamp();
-    bool isOverdue() const;  // Check if past due date and not completed
-    int daysUntilDue() const;  // Returns days until due (negative if overdue)
+    bool isOverdue() const;
+    int daysUntilDue() const;  // Negative if overdue, 0 if no due date
 };
 
 #endif // TODO_H

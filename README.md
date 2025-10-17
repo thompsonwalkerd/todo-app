@@ -1,12 +1,13 @@
 # Qt6 Todo App
 
-A simple desktop todo list app I built with Claude to learn Qt6 and CMake. Uses C++ and SQLite for storage.
+A simple desktop todo list app built to learn Qt6 and CMake with AI assistance.
 
 ## What It Does
 
 Basic todo list with the essentials - add tasks, mark them complete, organize by category, set priorities and due dates. Nothing fancy, just a functional app to practice Qt development.
 
 ## Why Todo App
+
 I wanted to make an app that would be cross compatible with my Macbook and my new "dumb" phone (Mudita Kompakt).
 
 ## Built With

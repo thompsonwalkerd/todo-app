@@ -9,37 +9,32 @@
 
 class TodoDatabase {
 private:
-    sqlite3* db;  // Raw pointer to SQLite database
+    sqlite3* db;
     std::string db_path;
-    
-    // Helper methods
+
     bool executeSQL(const std::string& sql);
     void handleError(const std::string& operation);
 
 public:
-    // Constructor/Destructor (RAII pattern)
     TodoDatabase(const std::string& path);
     ~TodoDatabase();
-    
-    // Prevent copying (database connections shouldn't be copied)
+
+    // Prevent copying - database connections shouldn't be copied
     TodoDatabase(const TodoDatabase&) = delete;
     TodoDatabase& operator=(const TodoDatabase&) = delete;
     
-    // Database initialization
     bool initialize();
-    
-    // CRUD Operations
-    bool createTodo(Todo& todo);  // Creates and sets the ID
+
+    // CRUD operations
+    bool createTodo(Todo& todo);  // Sets the ID from database
     std::vector<Todo> getAllTodos();
     std::vector<Todo> getTodosByCategory(const std::string& category);
     std::unique_ptr<Todo> getTodoById(int id);
     bool updateTodo(const Todo& todo);
     bool deleteTodo(int id);
-    
-    // Category management
+
     std::vector<std::string> getAllCategories();
-    
-    // Utility
+
     bool isOpen() const { return db != nullptr; }
     void close();
 };

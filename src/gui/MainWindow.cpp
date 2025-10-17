@@ -11,34 +11,31 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
-    
-    // Initialize database
+
     db = std::make_unique<TodoDatabase>("todos.db");
-    
+
     if (!db->isOpen()) {
         QMessageBox::critical(this, "Error", "Failed to open database!");
         return;
     }
-    
+
     if (!db->initialize()) {
         QMessageBox::critical(this, "Error", "Failed to initialize database!");
         return;
     }
-    
+
     setupUI();
     connectSignals();
     loadTodos();
 }
 
 MainWindow::~MainWindow() {
-    // Database automatically closes via RAII
 }
 
 void MainWindow::setupUI() {
     setWindowTitle("Todo");
     resize(700, 800);
-    
-    // Set app-wide stylesheet
+
     setStyleSheet(R"(
         QMainWindow {
             background-color: #FFFFFF;
@@ -86,21 +83,19 @@ void MainWindow::setupUI() {
         }
     )");
     
-    // Central widget
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
-    
+
     mainLayout = new QVBoxLayout(centralWidget);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-    
-    // === Top Bar ===
+
+    // Top bar
     QWidget* topBarWidget = new QWidget(this);
     topBarWidget->setStyleSheet("background-color: #FFFFFF; border-bottom: 1px solid #E5E5E5;");
     topBar = new QHBoxLayout(topBarWidget);
     topBar->setContentsMargins(20, 16, 20, 16);
-    
-    // Current category label (replaces title)
+
     categoryFilter = new QComboBox(this);
     categoryFilter->setStyleSheet(R"(
         QComboBox {
@@ -137,7 +132,6 @@ void MainWindow::setupUI() {
     categoryFilter->addItem("All");
     categoryFilter->setFocusPolicy(Qt::NoFocus);
     
-    // Filter button (funnel icon)
     QPushButton* filterButton = new QPushButton("⋮", this);
     filterButton->setFixedSize(36, 36);
     filterButton->setStyleSheet(R"(
@@ -159,7 +153,6 @@ void MainWindow::setupUI() {
         }
     )");
     connect(filterButton, &QPushButton::clicked, this, [this, filterButton]() {
-        // Show category menu
         QMenu menu(this);
         menu.setStyleSheet(R"(
             QMenu {
@@ -198,42 +191,39 @@ void MainWindow::setupUI() {
             }
         }
         
-        // Show menu below button
         QPoint pos = filterButton->mapToGlobal(QPoint(0, filterButton->height() + 4));
         menu.exec(pos);
     });
-    
+
     topBar->addWidget(categoryFilter);
     topBar->addStretch();
     topBar->addWidget(filterButton);
-    
+
     mainLayout->addWidget(topBarWidget);
-    
-    // === Todo List ===
+
+    // Todo list
     todoList = new QListWidget(this);
     TodoItemDelegate* delegate = new TodoItemDelegate(this);
     todoList->setItemDelegate(delegate);
-
-    // Connect checkbox click signal
     connect(delegate, &TodoItemDelegate::checkboxClicked, this, &MainWindow::onCheckboxClicked);
 
     mainLayout->addWidget(todoList);
-    
-    // === Bottom Status Bar ===
+
+    // Bottom status bar
     QWidget* bottomBar = new QWidget(this);
     bottomBar->setStyleSheet("background-color: #FFFFFF;");
     QHBoxLayout* bottomLayout = new QHBoxLayout(bottomBar);
     bottomLayout->setContentsMargins(20, 16, 20, 16);
-    
+
     statusLabel = new QLabel("0 items", this);
     statusLabel->setStyleSheet("color: #999999; font-size: 13px;");
     statusLabel->setAlignment(Qt::AlignCenter);
-    
+
     bottomLayout->addWidget(statusLabel);
-    
+
     mainLayout->addWidget(bottomBar);
-    
-    // === Floating Add Button (bottom right) ===
+
+    // Floating add button
     addButton = new QPushButton("+", centralWidget);
     addButton->setFixedSize(56, 56);
     addButton->setStyleSheet(R"(
@@ -254,25 +244,18 @@ void MainWindow::setupUI() {
         }
     )");
 
-    // Add shadow effect for depth
     QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect();
     shadow->setBlurRadius(12);
     shadow->setXOffset(0);
     shadow->setYOffset(4);
-    shadow->setColor(QColor(0, 0, 0, 38));  // ~15% opacity black
+    shadow->setColor(QColor(0, 0, 0, 38));
     addButton->setGraphicsEffect(shadow);
-    addButton->raise();  // Keep it on top
-    
-    // Position the floating button
-    connect(centralWidget, &QWidget::destroyed, [this]() {
-        // Cleanup if needed
-    });
+    addButton->raise();
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event) {
     QMainWindow::resizeEvent(event);
-    
-    // Position floating add button in bottom right
+
     if (addButton && centralWidget) {
         int x = centralWidget->width() - addButton->width() - 20;
         int y = centralWidget->height() - addButton->height() - 20;
@@ -289,8 +272,7 @@ void MainWindow::connectSignals() {
 
 void MainWindow::loadTodos() {
     refreshTodoList();
-    
-    // Load categories into filter
+
     auto categories = db->getAllCategories();
     categoryFilter->clear();
     categoryFilter->addItem("All");
@@ -301,18 +283,17 @@ void MainWindow::loadTodos() {
 
 void MainWindow::refreshTodoList() {
     todoList->clear();
-    
-    // Get todos based on filter
+
     std::vector<Todo> todos;
     QString currentFilter = categoryFilter->currentText();
-    
+
     if (currentFilter == "All") {
         todos = db->getAllTodos();
     } else {
         todos = db->getTodosByCategory(currentFilter.toStdString());
     }
-    
-    // Sort: incomplete first, then by priority, then by due date
+
+    // Sort: incomplete first, then priority, then due date
     std::sort(todos.begin(), todos.end(), [](const Todo& a, const Todo& b) {
         if (a.isCompleted() != b.isCompleted()) return !a.isCompleted();
         if (a.getPriority() != b.getPriority()) return a.getPriority() > b.getPriority();
@@ -324,31 +305,25 @@ void MainWindow::refreshTodoList() {
         
         return false;
     });
-    
-    // Add each todo to the list
+
     for (const auto& todo : todos) {
         QString itemText;
-        
-        // Keep priority indicator in data for sorting/logic
+
         if (todo.getPriority() == 3 && !todo.isCompleted()) {
             itemText += "● ";
         } else {
             itemText += "  ";
         }
-        
-        // Title
+
         itemText += QString::fromStdString(todo.getTitle());
         itemText += "\n";
-        
-        // Metadata line - will be shown in tiny uppercase
+
         QString metadata = "";
-        
-        // Category (only in "All" view)
+
         if (currentFilter == "All" && !todo.getCategory().empty()) {
             metadata += QString::fromStdString(todo.getCategory());
         }
-        
-        // Due date info
+
         if (todo.isOverdue() && !todo.isCompleted()) {
             if (!metadata.isEmpty()) metadata += " • ";
             metadata += "overdue";
@@ -367,35 +342,31 @@ void MainWindow::refreshTodoList() {
         }
         
         itemText += metadata;
-        
+
         QListWidgetItem* item = new QListWidgetItem(itemText);
-        
-        // Completed styling
+
         if (todo.isCompleted()) {
             QFont font = item->font();
             font.setStrikeOut(true);
             item->setFont(font);
             item->setForeground(QColor("#E0E0E0"));
-        } 
-        // Overdue styling
+        }
         else if (todo.isOverdue()) {
             QFont font = item->font();
             font.setBold(true);
             item->setFont(font);
         }
-        // High priority styling
         else if (todo.getPriority() == 3) {
             QFont font = item->font();
             font.setBold(true);
             item->setFont(font);
         }
-        
-        // Store todo ID
+
         item->setData(Qt::UserRole, todo.getId());
-        
+
         todoList->addItem(item);
     }
-    
+
     updateStatusBar();
 }
 
